@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multi-cloud-project
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: multi-cloud-project
+
+  template:
+    metadata:
+      labels:
+        app: multi-cloud-project
+
+    spec:
+      containers:
+        - name: multi-cloud-project
+          image: multi-cloud-project:latest
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 5000
+
+          env:
+            - name: AWS_REGION
+              value: "eu-west-2"
+
+            - name: S3_BUCKET_NAME
+              value: "multi-cloud-file-upload-abhishekyadav1806"
+
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+
+            - name: AZURE_STORAGE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: azure-credentials
+                  key: AZURE_STORAGE_CONNECTION_STRING
+
+            - name: AZURE_CONTAINER_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: azure-credentials
+                  key: AZURE_CONTAINER_NAME
