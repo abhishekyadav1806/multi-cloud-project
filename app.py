@@ -1,11 +1,24 @@
 import os
 
+import boto3
+from dotenv import load_dotenv
 from flask import Flask, render_template, request
+from werkzeug.utils import secure_filename
+
+load_dotenv()
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = "uploads"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+AWS_REGION = os.getenv("AWS_REGION", "eu-west-2")
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+AWS_PROFILE = os.getenv("AWS_PROFILE", "cloud-project")
+
+session = boto3.Session(
+    profile_name=AWS_PROFILE,
+    region_name=AWS_REGION
+)
+
+s3 = session.client("s3")
 
 
 @app.route("/")
@@ -17,16 +30,22 @@ def home():
 def upload_file():
 
     if "file" not in request.files:
-        return "No file was selected."
+        return "No file was selected.", 400
 
     file = request.files["file"]
 
     if file.filename == "":
-        return "No file was selected."
+        return "No file was selected.", 400
 
-    file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
+    filename = secure_filename(file.filename)
 
-    return f"File '{file.filename}' uploaded successfully!"
+    s3.upload_fileobj(
+        file,
+        S3_BUCKET_NAME,
+        filename
+    )
+
+    return f"File '{filename}' uploaded successfully to AWS S3!"
 
 
 if __name__ == "__main__":
